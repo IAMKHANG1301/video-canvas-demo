@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Video Edge Detection</title>
+    <style>
+        body { text-align: center; background: #222; color: white; font-family: sans-serif; }
+        .container { display: flex; justify-content: center; gap: 20px; margin-top: 20px; }
+        video, canvas { border: 2px solid #555; background: black; width: 480px; height: 270px; }
+    </style>
+</head>
+<body>
+    <h1>Video vs Edge Detection Canvas</h1>
+    <div class="container">
+        <video id="myvideo" controls crossorigin="anonymous">
+            <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
+        </video>
+        <canvas id="mycanvas"></canvas>
+    </div>
+
+    <script>
+        const video = document.getElementById('myvideo');
+        const canvas = document.getElementById('mycanvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+        video.addEventListener('play', () => {
+            // Thiết lập kích thước canvas khớp với video khi bắt đầu chạy
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            render();
+        });
+
+        function render() {
+            if (video.paused || video.ended) return;
+
+            // 1. Vẽ frame hiện tại của video lên canvas
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // 2. Lấy dữ liệu pixel
+            let frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            let data = frame.data;
+
+            // 3. Thuật toán tách biên đơn giản (Grayscale + Difference)
+            // Lưu ý: Đây là xử lý trực tiếp trên pixel để demo biên cạnh
+            let length = data.length;
+            let width = frame.width;
+
+            for (let i = 0; i < length; i += 4) {
+                let avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+                // So sánh pixel hiện tại với pixel bên cạnh để tìm sự thay đổi đột ngột (biên)
+                let nextPixelAvg = (data[i + 4] + data[i + 5] + data[i + 6]) / 3;
+                let diff = Math.abs(avg - nextPixelAvg);
+                
+                data[i] = data[i + 1] = data[i + 2] = diff > 15 ? 255 : 0; // Ngưỡng tách biên
+            }
+
+            ctx.putImageData(frame, 0, 0);
+
+            // Gọi lại hàm ở frame tiếp theo
+            requestAnimationFrame(render);
+        }
+    </script>
+</body>
+</html>
